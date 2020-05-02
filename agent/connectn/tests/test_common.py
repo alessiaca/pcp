@@ -62,8 +62,8 @@ def test_connect_four():
     board1[1, :] = 1
     board2[:, 3] = 1
     board3[1, 5] = 1
-    board4 = np.fill_diagonal(board4, 1)
-    win_board = common.connect_four(board,player)
+    np.fill_diagonal(board4, 1)
+    win_board = common.connect_four(board, player)
     win_board1 = common.connect_four(board1, player)
     win_board2 = common.connect_four(board2, player)
     win_board3 = common.connect_four(board3, player)

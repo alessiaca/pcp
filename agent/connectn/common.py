@@ -57,7 +57,7 @@ def connect_four(
     :param last_action: last column where player was dropped
     :return: Decision on whether the player won
     """
-
+    # Compare two states and update the counter accordingly
     def compare_states_and_count(state_1: BoardPiece, state_2: BoardPiece, player_func: BoardPiece, counter_func: int):
         if int(state_1) == player_func & int(state_2) == player_func:
             counter_func += 1
@@ -65,8 +65,8 @@ def connect_four(
             counter_func = 0
         return counter_func
 
-    # Check if there are 4 adjacent players in either rows of columns of board
-    for board_tmp in (board, board.T):
+    # Check if there are 4 adjacent players in either rows or columns of board
+    for board_tmp in [board, board.T]:
         for row in board_tmp:
             counter = 0
             for i in range(len(row)-1):
@@ -76,11 +76,10 @@ def connect_four(
 
         # Check if there are 4 adjacent players in a diagonal
         n_rows = board.shape[0]
-        for board_tmp in (board, np.flip(board)):
+        for board_tmp in [board, np.flip(board)]:
             for row_i in range(n_rows):
                 counter = 0
-                for i in range(row_i, n_rows-1):
-                    j = 0
+                for j, i in enumerate(range(row_i, n_rows-1)):
                     counter = compare_states_and_count(board[i, j], board[i+1, j+1], player, counter)
                     if counter == 3:
                         return True
