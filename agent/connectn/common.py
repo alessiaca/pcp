@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional
+from typing import Optional, Callable, Tuple
 
 PlayerAction = np.int8
 BoardPiece = np.int8
@@ -85,3 +85,13 @@ def connect_four(
                         return True
 
     return False
+
+
+class SavedState:
+    pass
+
+
+GenMove = Callable[
+    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
+    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+]
