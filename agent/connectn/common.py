@@ -45,7 +45,7 @@ def pretty_print_board(board: np.ndarray) -> str:
         pp_row = ' '.join(states_row)
         pp_board += '| ' + pp_row + ' |\n'
     pp_board += ('| ============= |\n'
-                 '| 1 2 3 4 5 6 7 |\n')
+                 '| 0 1 2 3 4 5 6 |\n')
     return pp_board
 
 
@@ -64,8 +64,8 @@ def apply_player_action(
     :param copy:
     :return: New state of board after player was dropped in column
     """
-    max_free_ind = np.max(np.where(board[:, action-1] == NO_PLAYER))
-    board[max_free_ind, action-1] = player
+    max_free_ind = np.max(np.where(board[:, action] == NO_PLAYER))
+    board[max_free_ind, action] = player
     return board
 
 

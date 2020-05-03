@@ -23,4 +23,4 @@ def generate_move_random(board: np.ndarray, player: BoardPiece, saved_state: Opt
             free_columns.append(i)
     action = np.random.choice(free_columns)
     time.sleep(1)
-    return action+1, saved_state
+    return action, saved_state
