@@ -1,8 +1,29 @@
 import numpy as np
 from typing import Optional, Callable, Tuple
+from enum import Enum
 
-PlayerAction = np.int8
-BoardPiece = np.int8
+BoardPiece = np.int8  # The data type (dtype) of the board
+NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
+PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 has a piece
+PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 has a piece
+
+PlayerAction = np.int8  # The column to be played
+
+
+class GameState(Enum):
+    IS_WIN = 1
+    IS_DRAW = -1
+    STILL_PLAYING = 0
+
+
+class SavedState:
+    pass
+
+
+GenMove = Callable[
+    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
+    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+]
 
 
 def initialize_game_state() -> np.ndarray:
@@ -17,7 +38,7 @@ def pretty_print_board(board: np.ndarray) -> str:
     :param board: State of board , 6 x 7 array
     :return: String which shows the state of the board in a nicer way
     """
-    states = [' ', 'O', 'X']
+    states = [' ', 'X', 'O']
     pp_board = '| ============= |\n'
     for row in board:
         states_row = [states[int(i)] for i in row]
@@ -43,8 +64,8 @@ def apply_player_action(
     :param copy:
     :return: New state of board after player was dropped in column
     """
-    max_free_ind = np.max(np.where(board[:, action] == 0))
-    board[max_free_ind, action] = player
+    max_free_ind = np.max(np.where(board[:, action-1] == NO_PLAYER))
+    board[max_free_ind, action-1] = player
     return board
 
 
@@ -87,11 +108,23 @@ def connect_four(
     return False
 
 
-class SavedState:
-    pass
+def check_end_state(
+    board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
+) -> GameState:
+
+    """
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
+    :param player: Player ID for which GameState should be checked
+    :param last_action: last column where player was dropped
+    :return: State of Game: Either the player won, the game is drawn or is still going on
+    """
+
+    if connect_four(board, player):
+        return GameState.IS_WIN
+    else:
+        if 0 in board:
+            return GameState.STILL_PLAYING
+        else:
+            return GameState.IS_DRAW
 
 
-GenMove = Callable[
-    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
-    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
-]

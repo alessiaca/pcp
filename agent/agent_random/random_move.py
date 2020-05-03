@@ -19,11 +19,8 @@ def generate_move_random(
 
     free_columns = []
     for i, column in enumerate(board.T):
-        if 0 in set(column):
+        if 0 in column:
             free_columns.append(i)
-    if not free_columns:
-        return "All states are occupied - Game ends without winner"
-    else:
         action = np.random.choice(free_columns)
         saved_state = 0
         return action, saved_state

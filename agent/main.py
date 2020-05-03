@@ -6,7 +6,7 @@ from agent_random import generate_move
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
-    while not 0 <= action < board.shape[1]:
+    while not 0 < action <= board.shape[1]:
         try:
             action = PlayerAction(input("Column? "))
         except:
