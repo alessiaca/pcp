@@ -1,26 +1,6 @@
 import numpy as np
 from typing import Optional, Tuple
-#from ..connectn.common import apply_player_action # Fix import and use functions from common.py
-
-
-PlayerAction = np.int8
-BoardPiece = np.int8
-SavedState = np.int8
-
-
-def apply_player_action(
-        board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False) \
-        -> np.ndarray:
-    """
-    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
-    :param action: Column where player should be dropped
-    :param player: player ID [1, 2]
-    :param copy:
-    :return: New state of board after player was dropped in column
-    """
-    max_free_ind = np.max(np.where(board[:, action] == 0))
-    board[max_free_ind, action] = player
-    return board
+from connectn.common import PlayerAction, BoardPiece, SavedState, apply_player_action
 
 
 def eval_board(board: np.ndarray, player: BoardPiece) -> int:
@@ -63,24 +43,40 @@ def eval_board(board: np.ndarray, player: BoardPiece) -> int:
 
 def minimax(board: np.ndarray, player: BoardPiece, depth: int, MaxPlayer: bool) \
         -> Tuple[PlayerAction, np.ndarray]:
+    """
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
+    :param player: Player ID for which victory should be checked
+    :param depth: Steps ahead that should be evaluated
+    :param MaxPlayer: If it is the turn of the player, for whom the evaulation should be maximized
+    :return: The minimal/maximal evaluation (adjacent player ID) and the action leading to that evaluation
+    """
+
+    from connectn.common import PLAYER1, PLAYER2
+    players = [PLAYER1, PLAYER2]
+
     if depth == 0:
         return 0, eval_board(board, player)
+
     if MaxPlayer:
         max_counter = - np.inf
+        players.remove(player)
+        min_player = players.pop()
         for action, column in enumerate(board):
             if 0 in column:
                 board = apply_player_action(board, action, player)
-                action, counter = minimax(board, player, depth - 1, False)
+                action, counter = minimax(board, min_player, depth - 1, False)
                 if counter >= max_counter:
                     max_counter = counter
                     max_action = action
             return max_counter, max_action
     else:
         min_counter = np.inf
+        players.remove(player)
+        max_player = players.pop()
         for action, column in enumerate(board):
             if 0 in column:
                 board = apply_player_action(board, action, player)
-                action, counter = minimax(board, player, depth - 1, True)
+                action, counter = minimax(board, max_player, depth - 1, True)
                 if counter <= min_counter:
                     min_counter = counter
                     min_action = action
@@ -98,5 +94,3 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
 
     action, counter = minimax(board, player, 4, True)
     return action, saved_state
-
-print(minimax(np.zeros((6,7)), BoardPiece(1), 2, True))
