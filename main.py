@@ -1,22 +1,24 @@
 import numpy as np
 from typing import Optional, Callable
-from connectn.common import PlayerAction, BoardPiece, SavedState, GenMove
+from connectn.common import PlayerAction, BoardPiece, SavedState, GenMove, apply_player_action
 from agents.agent_random import generate_move
 from agents.agent_minimax.minimax_move import generate_move_minimax
 
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
-    while not 0 <= action < board.shape[1]:
+    new_board = None
+    while not 0 <= action < board.shape[1] or new_board is None:
         try:
             action = PlayerAction(input("Column? "))
+            new_board = apply_player_action(board, action, _player)
         except:
             pass
     return action, saved_state
 
 
 def human_vs_agent(
-        generate_move_1: GenMove = generate_move,
+        generate_move_1: GenMove = generate_move_minimax,
         generate_move_2: GenMove = user_move,
         player_1: str = "Player 1",
         player_2: str = "Player 2",
@@ -69,5 +71,5 @@ def human_vs_agent(
 
 
 if __name__ == "__main__":
-    #human_vs_agent()
-    generate_move_minimax(np.zeros((6,7)), BoardPiece(1),0)
+    human_vs_agent()
+    #generate_move_minimax(np.zeros((6,7)), BoardPiece(1),0)

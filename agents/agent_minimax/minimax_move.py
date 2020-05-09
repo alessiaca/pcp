@@ -47,40 +47,52 @@ def minimax(board: np.ndarray, player: BoardPiece, depth: int, MaxPlayer: bool) 
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which victory should be checked
     :param depth: Steps ahead that should be evaluated
-    :param MaxPlayer: If it is the turn of the player, for whom the evaulation should be maximized
+    :param MaxPlayer: If it is the turn of the player, for whom the evaluation should be maximized
     :return: The minimal/maximal evaluation (adjacent player ID) and the action leading to that evaluation
     """
 
     from connectn.common import PLAYER1, PLAYER2
     players = [PLAYER1, PLAYER2]
 
+    def get_other_player(players, player):
+        players.remove(player)
+        return players.pop()
+
+    # If bottom of the tree is reached evaluate the board state i.e. how many adjacent pieces the player, for which
+    # the evaluation should be maximized, has on the board
     if depth == 0:
-        return 0, eval_board(board, player)
+        # If at the bottom of the tree, it is the turn of the other player, get the player for which we want to
+        # evaluate the board
+        if not MaxPlayer:
+            max_player = get_other_player(players, player)
+        else:
+            max_player = player
+        return eval_board(board, max_player), 1
 
     if MaxPlayer:
         max_counter = - np.inf
-        players.remove(player)
-        min_player = players.pop()
-        for action, column in enumerate(board):
+        max_action = 0
+        min_player = get_other_player(players, player)
+        for action, column in enumerate(board.T):
             if 0 in column:
-                board = apply_player_action(board, action, player)
-                action, counter = minimax(board, min_player, depth - 1, False)
+                board_new = apply_player_action(board.copy(), action, player)
+                counter, _ = minimax(board_new, min_player, depth - 1, False)
                 if counter >= max_counter:
                     max_counter = counter
                     max_action = action
-            return max_counter, max_action
+        return max_counter, max_action
     else:
         min_counter = np.inf
-        players.remove(player)
-        max_player = players.pop()
-        for action, column in enumerate(board):
+        min_action = 0
+        max_player = get_other_player(players, player)
+        for action, column in enumerate(board.T):
             if 0 in column:
-                board = apply_player_action(board, action, player)
-                action, counter = minimax(board, max_player, depth - 1, True)
+                board_new = apply_player_action(board.copy(), action, player)
+                counter, _ = minimax(board_new, max_player, depth - 1, True)
                 if counter <= min_counter:
                     min_counter = counter
                     min_action = action
-            return min_counter, min_action
+        return min_counter, min_action
 
 
 def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]) \
@@ -92,5 +104,5 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     :return: Column in which player wants to make his move (chosen using the minimax algorithm)
     """
 
-    action, counter = minimax(board, player, 4, True)
+    counter, action = minimax(board, player, 4, True)
     return action, saved_state
