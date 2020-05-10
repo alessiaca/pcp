@@ -39,37 +39,44 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
 
     counter_1 = compute_max_adjacent_players(board, players[0])
     counter_2 = compute_max_adjacent_players(board, players[1])
-    return counter_1 - counter_2
+    if counter_2 == 3:
+        return -np.inf
+    return counter_1
 
 
 # TODO: Introduce alpha-beta pruning
 def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int, MaxPlayer: bool) \
         -> Tuple[PlayerAction, np.ndarray]:
 
-    # If bottom of the tree is reached evaluate the board state i.e. how many adjacent pieces the player, for which
-    # the evaluation should be maximized, has on the board
     if depth == 0:
         return eval_board(board, players), 1
 
-    best_value = -np.inf if MaxPlayer else np.inf
+    if MaxPlayer:
+        best_value = -np.inf
+        player = players[0]
+    else:
+        best_value = np.inf
+        player = players[1]
+
     free_columns = [i for i, column in enumerate(board.T) if 0 in column]
     np.random.shuffle(free_columns)
     for action in free_columns:
-        board_new = apply_player_action(board.copy(), action, players[0])
+        board_new = apply_player_action(board.copy(), action, player)
         value, _ = minimax(board_new, alpha, beta, players, depth - 1, not MaxPlayer)
 
-        if MaxPlayer and value > best_value:
+        if MaxPlayer and value >= best_value:
             best_value = value
             best_action = action
             alpha = max(alpha, best_value)
             if beta <= alpha:
                 break
-        if not MaxPlayer and value < best_value:
+        if not MaxPlayer and value <= best_value:
             best_value = value
             best_action = action
             beta = min(beta, best_value)
             if beta <= alpha:
                 break
+
     return best_value, best_action
 
 
@@ -87,5 +94,5 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     players.remove(player)
     ordered_players = [player] + players
 
-    value, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
+    value, action = minimax(board, -np.inf, np.inf, ordered_players, 2, True)
     return action, saved_state
