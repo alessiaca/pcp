@@ -3,7 +3,8 @@ from typing import Optional, Tuple
 from connectn.common import PlayerAction, BoardPiece, SavedState, apply_player_action
 
 
-# TODO: Implement a better evaluation of the board state: Look at the literature of connect4 heuristics
+# TODO: Implement a better evaluation of the board state: Look at the literature of connect4 heuristics, Mixture of hard
+#  rules and heuristic !?
 def eval_board(board: np.ndarray, players: BoardPiece) -> int:
 
     def compute_max_adjacent_players(board: np.ndarray, player: BoardPiece) -> int:
@@ -44,9 +45,17 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
     return counter_1
 
 
-# TODO: Introduce alpha-beta pruning
 def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int, MaxPlayer: bool) \
         -> Tuple[PlayerAction, np.ndarray]:
+    """
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
+    :param alpha: the best value that maximizer can guarantee in the current state or before in the maximizer turn
+    :param beta: the best value that minimizer can guarantee in the current state or before it in the minimizer turn
+    :param players: List of players with maximizer first
+    :param depth: Steps again that should be evaluated
+    :param MaxPlayer: Bool if maximizers turn
+    :return: Best value for maximizer or minimizer and the corresponding action
+    """
 
     if depth == 0:
         return eval_board(board, players), 1
