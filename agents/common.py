@@ -1,11 +1,13 @@
 import numpy as np
 from typing import Optional, Callable, Tuple
 from enum import Enum
+from numba import njit
 
 BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
 PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 has a piece
 PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 has a piece
+CONNECT_N = 4
 
 PlayerAction = np.int8  # The column to be played
 
@@ -69,6 +71,7 @@ def apply_player_action(
     return board
 
 
+@njit()
 def connect_four(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None) \
         -> bool:
@@ -76,35 +79,26 @@ def connect_four(
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which victory should be checked
     :param last_action: last column where player was dropped
-    :return: Decision on whether the player won
+    :return: Decision on whether the player won, he has 4 adjacent pieces on the board
     """
-    # Compare two states and update the counter accordingly
-    def compare_states_and_count(state_1: BoardPiece, state_2: BoardPiece, player_func: BoardPiece, counter_func: int):
-        if int(state_1) == player_func & int(state_2) == player_func:
-            counter_func += 1
-        else:
-            counter_func = 0
-        return counter_func
-
-    # Check if there are 4 adjacent players in either rows or columns of board
-    for board_tmp in [board, board.T]:
-        for row in board_tmp:
-            counter = 0
-            for i in range(len(row)-1):
-                counter = compare_states_and_count(row[i], row[i+1], player, counter)
-                if counter == 3:
-                    return True
-
-        # Check if there are 4 adjacent players in a diagonal
-        n_rows = board.shape[0]
-        for board_tmp in [board, np.flip(board)]:
-            for row_i in range(n_rows):
-                counter = 0
-                for j, i in enumerate(range(row_i, n_rows-1)):
-                    counter = compare_states_and_count(board[i, j], board[i+1, j+1], player, counter)
-                    if counter == 3:
-                        return True
-
+    rows, cols = board.shape
+    rows_edge = rows - CONNECT_N + 1
+    cols_edge = cols - CONNECT_N + 1
+    for i in range(rows):
+        for j in range(cols_edge):
+            if np.all(board[i, j:j+CONNECT_N] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols):
+            if np.all(board[i:i+CONNECT_N, j] == player):
+                return True
+    for i in range(rows_edge):
+        for j in range(cols_edge):
+            block = board[i:i+CONNECT_N, j:j+CONNECT_N]
+            if np.all(np.diag(block) == player):
+                return True
+            if np.all(np.diag(block[::-1, :]) == player):
+                return True
     return False
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-import connectn.common as common
+import agents.common as common
 
 
 def test_initialize_game_state():

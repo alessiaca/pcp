@@ -1,48 +1,56 @@
 import numpy as np
 from typing import Optional, Tuple
-from connectn.common import PlayerAction, BoardPiece, SavedState, apply_player_action
+from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action, CONNECT_N
 
 
-# TODO: Implement a better evaluation of the board state: Look at the literature of connect4 heuristics, Mixture of hard
-#  rules and heuristic !?
 def eval_board(board: np.ndarray, players: BoardPiece) -> int:
+    """
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
+    :param players: List of players with maximizer first
+    :return: Evaluation of the board
+    """
 
-    def compute_max_adjacent_players(board: np.ndarray, player: BoardPiece) -> int:
+    def eval_board_part(board_part: np.ndarray, players: BoardPiece) -> int:
+        """
+        :param board_part: 4 adjacent board pieces
+        :param players: List of players with maximizer first
+        :return: Value of the board_part
+        """
+        # Count the occurrences of the players in CONNECT_N adjacent cells, where a win could potentially occur
+        max_player_n = np.count_nonzero(row_part == players[0])
+        min_player_n = np.count_nonzero(row_part == players[1])
+        if max_player_n == 4:
+            return np.infty
+        elif min_player_n == 0:
+            return max_player_n
+        else:
+            return 0
 
-        max_counter = - np.inf
+    rows, cols = board.shape
+    rows_edge = rows - CONNECT_N + 1
+    cols_edge = cols - CONNECT_N + 1
+    players_rev = players[::-1]  # Players with minimizing player first
+    value_max_player = 0
+    value_min_player = 0
+    for i in range(rows):
+        for j in range(cols_edge):
+            row_part = board[i, j:j + CONNECT_N]
+            value_max_player += eval_board_part(row_part, players)
+            value_min_player += eval_board_part(row_part, players_rev)
+    for i in range(rows_edge):
+        for j in range(cols):
+            col_part = board[i:i + CONNECT_N, j]
+            value_max_player += eval_board_part(col_part, players)
+            value_min_player += eval_board_part(col_part, players_rev)
+    for i in range(rows_edge):
+        for j in range(cols_edge):
+            block = board[i:i + CONNECT_N, j:j + CONNECT_N]
+            value_max_player += eval_board_part(np.diag(block), players)
+            value_min_player += eval_board_part(np.diag(block), players_rev)
+            value_max_player += eval_board_part(np.diag(block[::-1, :]), players)
+            value_min_player += eval_board_part(np.diag(block[::-1, :]), players_rev)
 
-        # Compare two states and update the counter accordingly
-        def compare_states_and_count(state_1: BoardPiece, state_2: BoardPiece, player_func: BoardPiece, counter_func: int):
-            if int(state_1) == player_func & int(state_2) == player_func:
-                counter_func += 1
-            else:
-                counter_func = 0
-            return counter_func
-
-        # Check if there are 4 adjacent players in either rows or columns of board
-        for board_tmp in [board, board.T]:
-            for row in board_tmp:
-                counter = 0
-                for i in range(len(row)-1):
-                    counter = compare_states_and_count(row[i], row[i+1], player, counter)
-                max_counter = max(counter, max_counter)
-
-            # Check if there are 4 adjacent players in a diagonal
-            n_rows = board.shape[0]
-            for board_tmp in [board, np.flip(board)]:
-                for row_i in range(n_rows):
-                    counter = 0
-                    for j, i in enumerate(range(row_i, n_rows-1)):
-                        counter = compare_states_and_count(board[i, j], board[i+1, j+1], player, counter)
-                    max_counter = max(counter, max_counter)
-
-        return max_counter
-
-    counter_1 = compute_max_adjacent_players(board, players[0])
-    counter_2 = compute_max_adjacent_players(board, players[1])
-    if counter_2 == 3:
-        return -np.inf
-    return counter_1
+    return value_max_player - value_min_player
 
 
 def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int, MaxPlayer: bool) \
@@ -98,10 +106,10 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     :return: Column in which player wants to make his move (chosen using the minimax algorithm)
     """
     # Create a list that holds the player first, and the opponent second
-    from connectn.common import PLAYER1, PLAYER2
+    from agents.common import PLAYER1, PLAYER2
     players = [PLAYER1, PLAYER2]
     players.remove(player)
     ordered_players = [player] + players
 
-    value, action = minimax(board, -np.inf, np.inf, ordered_players, 2, True)
+    value, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
     return action, saved_state
