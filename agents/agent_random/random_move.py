@@ -1,5 +1,4 @@
 import numpy as np
-import time
 from typing import Optional, Tuple
 from agents.common import PlayerAction, BoardPiece, SavedState, NO_PLAYER
 

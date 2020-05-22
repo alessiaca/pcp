@@ -22,7 +22,7 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
         if max_player_n == 4:
             return np.infty
         elif min_player_n == 0:
-            return max_player_n**2
+            return max_player_n ** 2
         else:
             return 0
 

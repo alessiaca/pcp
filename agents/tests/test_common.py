@@ -3,7 +3,6 @@ import agents.common as common
 
 
 def test_initialize_game_state():
-
     ret = common.initialize_game_state()
 
     assert isinstance(ret, np.ndarray)
@@ -13,44 +12,35 @@ def test_initialize_game_state():
 
 
 def test_pretty_print_board():
-
     board = common.initialize_game_state()
     pp_board = common.pretty_print_board(board)
 
     assert isinstance(pp_board, str)
-    assert pp_board
     assert len(pp_board) > 42
 
 
 def test_string_to_board():
-
-    board = common.initialize_game_state()
-    pp_board = common.pretty_print_board(board)
-    st_board = common.string_to_board(pp_board)
-
-    assert isinstance(st_board, np.ndarray)
-    assert st_board.dtype == np.int8
-    assert st_board.shape == (6, 7)
-    # assert not np.all(st_board == 0)
+    # not implemented yet
+    pass
 
 
 def test_apply_player_action():
-
-    board = common.initialize_game_state()  # Try different boards
-    action = 0  # Try different actions
-    player = 1  # Try different players
-    new_board1 = common.apply_player_action(board=board, action=action, player=player)
-    new_board2 = common.apply_player_action(board=new_board1, action=action, player=player)
-    assert isinstance(new_board1, np.ndarray)
-    assert new_board1.dtype == np.int8
-    assert new_board1.shape == (6, 7)
-    assert not np.all(new_board1 == 0)
-    assert new_board1[5, action] == player
-    assert new_board2[4, action] == player
+    board = common.initialize_game_state()
+    player = 1
+    for action, column in enumerate(board.T):
+        for i in range(2):
+            player = common.PLAYER1
+            board = common.apply_player_action(board=board, action=action, player=player)
+            assert isinstance(board, np.ndarray)
+            assert board.dtype == np.int8
+            assert board.shape == (6, 7)
+            assert not np.all(board == 0)
+            assert board[5 - i, action] == player
+    # Testing for an insertion in a full board/column is not necessary, as this is already taken care of in the
+    # user_move and generate_move_minimax/random function
 
 
 def test_connect_four():
-
     board = common.initialize_game_state()
     player = 1
     n_rows = board.shape[0]
@@ -77,12 +67,8 @@ def test_connect_four():
     assert win_board4
 
 
-
 test_pretty_print_board()
 test_string_to_board()
 test_initialize_game_state()
 test_apply_player_action()
 test_connect_four()
-
-
-
