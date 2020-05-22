@@ -10,19 +10,19 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
     :return: Evaluation of the board
     """
 
-    def eval_board_part(board_part: np.ndarray, players: BoardPiece) -> int:
+    def eval_board_part(board_part: np.ndarray, players_eval: BoardPiece) -> int:
         """
         :param board_part: 4 adjacent board pieces
-        :param players: List of players with maximizer first
+        :param players_eval: List of players with maximizer first
         :return: Value of the board_part
         """
         # Count the occurrences of the players in CONNECT_N adjacent cells, where a win could potentially occur
-        max_player_n = np.count_nonzero(row_part == players[0])
-        min_player_n = np.count_nonzero(row_part == players[1])
+        max_player_n = np.count_nonzero(row_part == players_eval[0])
+        min_player_n = np.count_nonzero(row_part == players_eval[1])
         if max_player_n == 4:
             return np.infty
         elif min_player_n == 0:
-            return max_player_n
+            return max_player_n**2
         else:
             return 0
 
