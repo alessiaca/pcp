@@ -1,31 +1,26 @@
 import numpy as np
-from typing import Optional, Tuple
-from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action,connect_four, CONNECT_N
+from typing import Optional, Tuple, List, Union
+from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action, check_end_state,\
+    GameState, CONNECT_N, PLAYER1, PLAYER2
 
 
-def eval_board(board: np.ndarray, players: BoardPiece) -> int:
+def eval_board(board: np.ndarray, players: List[BoardPiece]) -> float:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param players: List of players with maximizer first
     :return: Evaluation of the board
     """
-    # Return a infinitely negative evaluation for a board in which the rival player won - regardless
-    # of whether the max player could theoretically also connect N in his next move
-    if connect_four(board, players[1]):
-        return -np.infty
 
-    def eval_board_part(board_part: np.ndarray, players_eval: BoardPiece) -> int:
+    def eval_board_part(board_part: np.ndarray, players_eval: List[BoardPiece]) -> float:
         """
         :param board_part: 4 adjacent board pieces
         :param players_eval: List of players with maximizer first
         :return: Value of the board_part
         """
         # Count the occurrences of the players in CONNECT_N adjacent cells, where a win could potentially occur
-        player_check_n = np.count_nonzero(row_part == players_eval[0])
-        player_riv_n = np.count_nonzero(row_part == players_eval[1])
-        if player_check_n == 4:
-            return np.infty
-        elif player_riv_n == 0:
+        player_check_n = np.count_nonzero(board_part == players_eval[0])
+        player_riv_n = np.count_nonzero(board_part == players_eval[1])
+        if player_riv_n == 0:
             return player_check_n ** 2
         else:
             return 0
@@ -57,8 +52,8 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
     return value_max_player - value_min_player
 
 
-def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int, MaxPlayer: bool) \
-        -> Tuple[PlayerAction, np.ndarray]:
+def minimax(board: np.ndarray, alpha: int, beta: int, players: List[BoardPiece], depth: int, MaxPlayer: bool) \
+        -> Tuple[any, Union[PlayerAction, None]]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param alpha: the best value that maximizer can guarantee in the current state or before in the maximizer turn
@@ -68,9 +63,19 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int,
     :param MaxPlayer: Bool if maximizers turn
     :return: Best value for maximizer or minimizer and the corresponding action
     """
-
-    if depth == 0:
-        return eval_board(board, players), 1
+    # Check endstate of the game after last players move
+    end_state = check_end_state(board, players[0] if not MaxPlayer else players[1])
+    # Return maximally positive/negative value if the move of the last player won the game
+    if end_state == GameState.IS_WIN:
+        if MaxPlayer:
+            return -np.infty, None
+        else:
+            return np.infty, None
+    if end_state == GameState.IS_DRAW:
+        return 0, None
+    # Only evaluate the board if the game is still on and the bottom of the tree is reached
+    if end_state == GameState.STILL_PLAYING and depth == 0:
+        return eval_board(board, players), None
 
     if MaxPlayer:
         best_value = -np.inf
@@ -82,7 +87,7 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int,
     free_columns = [i for i, column in enumerate(board.T) if 0 in column]
     np.random.shuffle(free_columns)
     for action in free_columns:
-        board_new = apply_player_action(board.copy(), action, player)
+        board_new = apply_player_action(board.copy(), PlayerAction(action), player)
         value, _ = minimax(board_new, alpha, beta, players, depth - 1, not MaxPlayer)
 
         if MaxPlayer and value >= best_value:
@@ -102,7 +107,7 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: list, depth: int,
 
 
 def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]) \
-        -> Tuple[PlayerAction, int]:
+        -> Tuple[PlayerAction, SavedState]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID
@@ -111,13 +116,12 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     """
     # If the minimax agent can do the first move, make sure it is always in the middle
     if not board.any():
-        return 3, None
+        return PlayerAction(3), SavedState()
 
     # Create a list that holds the player first, and the opponent second
-    from agents.common import PLAYER1, PLAYER2
     players = [PLAYER1, PLAYER2]
     players.remove(player)
     ordered_players = [player] + players
 
-    value, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
-    return action, None
+    _, action = minimax(board, -np.inf, np.inf, ordered_players, 5, True)
+    return PlayerAction(action), SavedState()
