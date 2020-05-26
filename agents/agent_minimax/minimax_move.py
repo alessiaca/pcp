@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional, Tuple
-from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action, CONNECT_N
+from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action,connect_four, CONNECT_N
 
 
 def eval_board(board: np.ndarray, players: BoardPiece) -> int:
@@ -9,6 +9,10 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
     :param players: List of players with maximizer first
     :return: Evaluation of the board
     """
+    # Return a infinitely negative evaluation for a board in which the rival player won - regardless
+    # of whether the max player could theoretically also connect N in his next move
+    if connect_four(board, players[1]):
+        return -np.infty
 
     def eval_board_part(board_part: np.ndarray, players_eval: BoardPiece) -> int:
         """
@@ -17,12 +21,12 @@ def eval_board(board: np.ndarray, players: BoardPiece) -> int:
         :return: Value of the board_part
         """
         # Count the occurrences of the players in CONNECT_N adjacent cells, where a win could potentially occur
-        max_player_n = np.count_nonzero(row_part == players_eval[0])
-        min_player_n = np.count_nonzero(row_part == players_eval[1])
-        if max_player_n == 4:
+        player_check_n = np.count_nonzero(row_part == players_eval[0])
+        player_riv_n = np.count_nonzero(row_part == players_eval[1])
+        if player_check_n == 4:
             return np.infty
-        elif min_player_n == 0:
-            return max_player_n ** 2
+        elif player_riv_n == 0:
+            return player_check_n ** 2
         else:
             return 0
 
@@ -105,6 +109,10 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     :param saved_state:
     :return: Column in which player wants to make his move (chosen using the minimax algorithm)
     """
+    # If the minimax agent can do the first move, make sure it is always in the middle
+    if not board.any():
+        return 3, None
+
     # Create a list that holds the player first, and the opponent second
     from agents.common import PLAYER1, PLAYER2
     players = [PLAYER1, PLAYER2]
@@ -112,4 +120,4 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     ordered_players = [player] + players
 
     value, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
-    return action, saved_state
+    return action, None

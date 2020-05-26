@@ -7,11 +7,11 @@ from agents.agent_minimax import minimax_move
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
-    new_board = None
-    while not 0 <= action < board.shape[1] or new_board is None:
+    move_worked = None
+    while not 0 <= action < board.shape[1] or move_worked is None:
         try:
             action = PlayerAction(input("Column? "))
-            new_board = apply_player_action(board, action, _player)
+            move_worked = apply_player_action(board, action, _player)
         except:
             pass
     return action, saved_state
@@ -66,6 +66,7 @@ def human_vs_agent(
                         print(
                             f'{player_name} won playing {"X" if player == PLAYER1 else "O"}'
                         )
+
                     playing = False
                     break
 

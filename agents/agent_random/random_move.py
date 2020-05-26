@@ -13,4 +13,4 @@ def generate_move_random(board: np.ndarray, player: BoardPiece, saved_state: Opt
     """
     # Get column indexes where there is no player and choose one empty column randomly
     action = np.random.choice(np.unique(np.where(board == NO_PLAYER)[1]))
-    return action, saved_state
+    return action, None
