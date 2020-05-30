@@ -123,5 +123,5 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
     players.remove(player)
     ordered_players = [player] + players
 
-    _, action = minimax(board, -np.inf, np.inf, ordered_players, 5, True)
+    _, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
     return PlayerAction(action), SavedState()

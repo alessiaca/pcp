@@ -7,11 +7,11 @@ BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
 PLAYER1 = BoardPiece(1)  # board[i, j] == PLAYER1 where player 1 has a piece
 PLAYER2 = BoardPiece(2)  # board[i, j] == PLAYER2 where player 2 has a piece
-CONNECT_N = 4
-
+CONNECT_N = 4  # Number of connected board pieces needed for a win
 PlayerAction = np.int8  # The column to be played
 
 
+# Class indicating whether the game is still going on, oen of the players won or ended in a draw (full board)
 class GameState(Enum):
     IS_WIN = 1
     IS_DRAW = -1
@@ -38,7 +38,7 @@ def initialize_game_state() -> np.ndarray:
 def pretty_print_board(board: np.ndarray) -> str:
     """
     :param board: State of board , 6 x 7 array
-    :return: String which shows the state of the board in a nicer way
+    :return: String which shows the state of the board in a human readable way
     """
     states = [' ', 'X', 'O']
     pp_board = '| ============= |\n'
@@ -51,20 +51,13 @@ def pretty_print_board(board: np.ndarray) -> str:
     return pp_board
 
 
-def string_to_board(pp_board: str) -> np.ndarray:
-    return np.ones((6, 7), dtype=BoardPiece)
-# Not necessary yet
-
-
 def apply_player_action(
-        board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False) \
-        -> np.ndarray:
+        board: np.ndarray, action: PlayerAction, player: BoardPiece) -> np.ndarray:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param action: Column where player should be dropped
-    :param player: player ID [1, 2]
-    :param copy:
-    :return: New state of board after player was dropped in column
+    :param player: player ID for which action should be applied [1, 2]
+    :return: New state of board after action of the player was applied
     """
     max_free_ind = np.max(np.where(board[:, action] == NO_PLAYER))
     board[max_free_ind, action] = player
@@ -79,7 +72,7 @@ def connect_four(
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which victory should be checked
     :param last_action: last column where player was dropped
-    :return: Decision on whether the player won, he has 4 adjacent pieces on the board
+    :return: Decision on whether the player won (whether he has N adjacent pieces on the board)
     """
     rows, cols = board.shape
     rows_edge = rows - CONNECT_N + 1
@@ -105,7 +98,6 @@ def connect_four(
 def check_end_state(
     board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> GameState:
-
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which GameState should be checked
