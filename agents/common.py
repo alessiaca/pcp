@@ -11,7 +11,7 @@ CONNECT_N = 4  # Number of connected board pieces needed for a win
 PlayerAction = np.int8  # The column to be played
 
 
-# Class indicating whether the game is still going on, oen of the players won or ended in a draw (full board)
+# Class indicating whether the game is still going on, ended in a draw (full board) or one of the players won
 class GameState(Enum):
     IS_WIN = 1
     IS_DRAW = -1

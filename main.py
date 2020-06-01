@@ -6,15 +6,22 @@ from agents.agent_minimax import minimax_move
 
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
+    """
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
+    :param _player: Player ID of the user
+    :param saved_state: not used this implementation of the user move generation
+    :return: Column the user wants to drop his player
+    """
     action = PlayerAction(-1)
     move_worked = None
+    # Make sure that a column is selected which is in the range of the board and is not already full
     while not 0 <= action < board.shape[1] or move_worked is None:
         try:
             action = PlayerAction(input("Column? "))
             move_worked = apply_player_action(board, action, _player)
         except:
             pass
-    return action, saved_state
+    return action, SavedState()
 
 
 def human_vs_agent(
@@ -27,11 +34,24 @@ def human_vs_agent(
         init_1: Callable = lambda board, player: None,
         init_2: Callable = lambda board, player: None,
 ):
+    """
+    :param generate_move_1: Function which is used for the move generation of player 1
+    (either random_move, minimax_move or user_move)
+    :param generate_move_2: Function which is used for the move generation of player 2
+    :param player_1: Name of player 1
+    :param player_2: Name of player 2
+    :param args_1: Additional parameters for player 1
+    :param args_2: Additional parameters for player 2
+    :param init_1: /
+    :param init_2: /
+    :return: No return type, the function controls the CONNECT_N (here N=4) game between two players
+    """
     import time
     from agents.common import PLAYER1, PLAYER2, GameState
     from agents.common import initialize_game_state, pretty_print_board, apply_player_action, check_end_state
 
     players = (PLAYER1, PLAYER2)
+    # Two rounds in which the player that makes the first move is switched
     for play_first in (1, -1):
         for init, player in zip((init_1, init_2)[::play_first], players):
             init(initialize_game_state(), player)

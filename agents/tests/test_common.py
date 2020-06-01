@@ -7,6 +7,7 @@ players = [PLAYER1, PLAYER2]
 
 
 def test_initialize_game_state():
+
     ret = initialize_game_state()
 
     assert isinstance(ret, np.ndarray)
@@ -16,6 +17,7 @@ def test_initialize_game_state():
 
 
 def test_pretty_print_board():
+
     board = initialize_game_state()
     pp_board = pretty_print_board(board)
 
