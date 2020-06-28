@@ -97,25 +97,28 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: List[BoardPiece],
     free_columns = np.unique(np.where(board == NO_PLAYER)[1])
     # Change the order of the actions such that in case that more than one action has the same value,
     # a random action is selected
-    np.random.shuffle(free_columns)
+    action_values = []
     for action in free_columns:
         # Apply the action and got one steep deep deeper into the tree
         board_new = apply_player_action(board.copy(), PlayerAction(action), player)
         value, _ = minimax(board_new, alpha, beta, players, depth - 1, not MaxPlayer)
+        action_values.append((action, value))
         # If the action results in a board that is better than all the previously checked actions
         # for the current player, save it and the corresponding evaluation of the board
         if MaxPlayer and value >= best_value:
             best_value = value
             best_action = action
-            alpha = max(alpha, best_value)
-            if beta <= alpha:
-                break
+            #alpha = max(alpha, best_value)
+            #if beta <= alpha:
+               # break
         if not MaxPlayer and value <= best_value:
             best_value = value
             best_action = action
-            beta = min(beta, best_value)
-            if beta <= alpha:
-                break
+            #beta = min(beta, best_value)
+            #if beta <= alpha:
+                #break
+    if depth == 4:
+        print(action_values)
 
     return best_value, best_action
 
