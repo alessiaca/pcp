@@ -3,6 +3,7 @@ from typing import Optional, Callable
 from agents.common import PlayerAction, BoardPiece, SavedState, GenMove, apply_player_action
 from agents.agent_random import random_move
 from agents.agent_minimax import minimax_move
+from agents.agent_MCTS import MCTS_move
 
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
@@ -25,7 +26,7 @@ def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[Save
 
 
 def human_vs_agent(
-        generate_move_1: GenMove = minimax_move,
+        generate_move_1: GenMove = MCTS_move,
         generate_move_2: GenMove = user_move,
         player_1: str = "Player 1",
         player_2: str = "Player 2",

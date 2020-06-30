@@ -5,22 +5,20 @@ from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_act
     check_end_state, GameState, CONNECT_N, PLAYER1, PLAYER2, NO_PLAYER
 
 
-# TODO: How to take into account the possible moves of the opponent?
-
-
 def poss_actions(board: np.ndarray) -> np.ndarray:
     """
     :param state: Board
     :return: Array of possible actions/free columns
     """
-    return np.where(board[0,:] == NO_PLAYER)[0]
+    return np.where(board[0, :] == NO_PLAYER)[0]
 
 
 class Node:
-    def __init__(self, action=None, parent=None, board=None):
+    def __init__(self, action=None, parent=None, board=None, player=None):
         self.parent = parent
         self.action = action
         self.board = board
+        self.player = player
         self.wins = 0
         self.visits = 0
         self.children = []
@@ -34,23 +32,25 @@ class Node:
         # Define a function which returns the UCB1 value for each child
         ucb_func = lambda child: child.wins / child.visits + c * np.sqrt(np.log(self.visits) / child.visits)
         # Return the child with the largest score
-        return sorted(self.children, key = ucb_func)[-1]
+        return sorted(self.children, key=ucb_func)[-1]
 
-    def expansion(self, action: PlayerAction, player: BoardPiece):
+    def expansion(self, action: PlayerAction):
         """
         :param action: Action to apply in order to expand a node
-        :param player: Player ID
         :return: Child after node expansion: The board of the child node
         corresponds to the board of the parent after the action was applied
         """
+        # The parent node was created by taking an action for a specific player. For
+        # the expansion choose the opponent , as the players have alternating turns
+        player_exp = PLAYER1 if self.player == PLAYER2 else PLAYER1
         # Apply the action to the board of the parent node
-        new_board = apply_player_action(self.board, action, player)
+        new_board = apply_player_action(self.board.copy(), action, player_exp)
         # Create a new child node with that action and board
-        child = Node(action=action, parent=self, board=new_board)
-        # Append the created child to the children of the parnt
+        child = Node(action=action, parent=self, board=new_board, player=player_exp)
+        # Append the created child to the children of the parent
         self.children.append(child)
         # Remove the action form the untried actions from the parent
-        self.untried_actions.remove(action)
+        self.untried_actions = np.setdiff1d(self.untried_actions, action)
 
         return child
 
@@ -60,7 +60,8 @@ class Node:
         :param result: 0 or 1 indicating whether the player won the simulation
         """
         self.visits += 1
-        self.visits += result
+        self.wins += result
+
 
 
 def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction:
@@ -72,16 +73,15 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
     :return: Column in which player wants to make his move (chosen using MCTS)
     """
     # Initialize the root of the search tree with the current board state (based on
-    # which an action needs to be found)
-    root_node = Node(board=board)
+    # which an action needs to be found) and the player of the opponent
+    root_node = Node(board=board, player=PLAYER1 if player == PLAYER2 else PLAYER2)
 
-    # Perform as many iterations of MCTS as allowed by the maximal time
+    # Perform as many iterations of MCTS as allowed by the maximal time/maximum number of iterations
     end_time = time.time() + max_time
-
-    # Initialize the player and the node with the root node and the player for whom the best action is to be found
-    node = root_node
-    player_node = player
     while time.time() < end_time:
+
+        # Start at the root node at each iteration
+        node = root_node
 
         # Selection
         # Go down the tree until a terminal node or a node with untried moves is reached
@@ -96,14 +96,14 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
             # Expand the current node generating a new child node with a board after the
             # application of the action and remove the action from the untried actions
             # of the current node
-            node = node.expand(action, player_node)
+            node = node.expansion(action)
 
         # Simulation
         # Generate random moves of the players until the board is full
-        board = node.board
+        board = node.board.copy()
         win = False
-        player_sim = player_node
-        while poss_actions(board) and not win:
+        player_sim = player
+        while np.any(poss_actions(board)) and not win:
             # Choose the other player for the first/next random move
             player_sim = PLAYER1 if player_sim == PLAYER2 else PLAYER2
             # Choose a random action
@@ -115,12 +115,13 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
 
         # Backpropagation
         # Update the number of visits and wins for each node
+        # Check if player won the random simulation (win will be false if the game ended in a draw)
+        result = 1 if win and player_sim == player else 0
         # Go up the tree until reaching the root node
         while node is not None:
-            # Check if player won the random simulation (win will be false if the game ended in a draw)
-            result = 1 if win and player_sim == player else 0
             node.update(result)
             node = node.parent
+
 
     # Choose the best action based on the ratio of wins and visits
     eval_func = lambda child: child.wins / child.visits
