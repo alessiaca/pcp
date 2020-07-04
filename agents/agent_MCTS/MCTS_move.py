@@ -5,26 +5,35 @@ from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_act
     check_end_state, GameState, CONNECT_N, PLAYER1, PLAYER2, NO_PLAYER
 
 
-def poss_actions(board: np.ndarray) -> np.ndarray:
+def poss_actions(board, player=None, check_win=False) -> np.ndarray:
     """
     :param state: Board
+    :param player: Player who took the last action on the board
+    :param check_win: Bool if it should be checked whether the player won the game
     :return: Array of possible actions/free columns
     """
-    return np.where(board[0, :] == NO_PLAYER)[0]
-
+    # No free actions if the action of the node won the game
+    if check_win and connect_four(board, player):
+        return []
+    else:
+        return np.where(board[0, :] == NO_PLAYER)[0]
 
 class Node:
+    """
+    Describes a tree node with all properties and corresponding functions (see below)
+    """
     def __init__(self, action=None, parent=None, board=None, player=None):
         self.parent = parent
-        self.action = action
-        self.board = board
+        self.action = action  # Every node has an action that resulted in its board
+        self.board = board  # Every node has an associated board state
         self.player = player
         self.wins = 0
         self.visits = 0
         self.children = []
-        self.untried_actions = poss_actions(board) # Array of free columns
+        self.untried_actions = poss_actions(board, player, True)  # Array of free columns, no possible actions
+        # if the player won the game --> teh node is a terminal node
 
-    def selection(self, c=1):
+    def selection(self, c=np.sqrt(2)):
         """
         c: Exploration parameter
         :return: Returns the child node with the largest UCB1 value
@@ -37,8 +46,8 @@ class Node:
     def expansion(self, action: PlayerAction):
         """
         :param action: Action to apply in order to expand a node
-        :return: Child after node expansion: The board of the child node
-        corresponds to the board of the parent after the action was applied
+        :return: Child after node expansion (The board of the child node
+        corresponds to the board of the parent after the action was applied)
         """
         # The parent node was created by taking an action for a specific player. For
         # the expansion choose the opponent , as the players have alternating turns
@@ -49,15 +58,15 @@ class Node:
         child = Node(action=action, parent=self, board=new_board, player=player_exp)
         # Append the created child to the children of the parent
         self.children.append(child)
-        # Remove the action form the untried actions from the parent
+        # Remove the action from the untried actions from the parent
         self.untried_actions = np.setdiff1d(self.untried_actions, action)
 
         return child
 
     def update(self, result: int):
         """
-        Updated the win and visits value of a node
-        :param result: 0 or 1 indicating whether the player won the simulation
+        Update the win and visits value of a node
+        :param result: 0 if the game ended in a draw, 1 if the player won adn -1 if the opponent won
         """
         self.visits += 1
         self.wins += result
@@ -76,7 +85,7 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
     # which an action needs to be found) and the player of the opponent
     root_node = Node(board=board, player=PLAYER1 if player == PLAYER2 else PLAYER2)
 
-    # Perform as many iterations of MCTS as allowed by the maximal time/maximum number of iterations
+    # Perform as many iterations of MCTS as allowed by the maximal time
     end_time = time.time() + max_time
     while time.time() < end_time:
 
@@ -99,10 +108,10 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
             node = node.expansion(action)
 
         # Simulation
-        # Generate random moves of the players until the board is full
-        board = node.board.copy()
+        board = node.board.copy()  # Perform the simulation on a copy of the board
         win = False
-        player_sim = player
+        player_sim = node.player  # Last player who made a move in the tree path
+        # Generate random moves of the players until the board is full
         while np.any(poss_actions(board)) and not win:
             # Choose the other player for the first/next random move
             player_sim = PLAYER1 if player_sim == PLAYER2 else PLAYER2
@@ -115,15 +124,21 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
 
         # Backpropagation
         # Update the number of visits and wins for each node
-        # Check if player won the random simulation (win will be false if the game ended in a draw)
-        result = 1 if win and player_sim == player else 0
-        # Go up the tree until reaching the root node
+        # Check if which player won the random simulation and determine the corresponding result
+        if win:
+            if player_sim == player:
+                result = 1  # The player won
+            else:
+                result = -1  # The player lost against the opponent
+        else:
+            result = 0  # Game ended in a draw
+        # Go up the tree until reaching the root node and update the visits and wins property of
+        # each node on the way using the result
         while node is not None:
             node.update(result)
             node = node.parent
 
-
-    # Choose the best action based on the ratio of wins and visits
+    # After the max_time has run out, choose the best action based on the ratio of wins and visits
     eval_func = lambda child: child.wins / child.visits
     # Get the child with the best value
     best_child = sorted(root_node.children, key=eval_func)[-1]
@@ -139,5 +154,6 @@ def generate_move_MCTS(board: np.ndarray, player: BoardPiece, saved_state: Optio
     :param saved_state: Not used in this implementation of the move generation
     :return: Column in which player wants to make his move (chosen using MCTS)
     """
-    action = MCTS(board, player, 5)
+    # Give 10 sec to the agent to find a good action
+    action = MCTS(board, player, 10)
     return PlayerAction(action), SavedState()

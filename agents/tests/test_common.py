@@ -69,7 +69,9 @@ def test_connect_four():
         # Make sure that a win in a row is detected
         for row in range(n_rows):
             board = initialize_game_state()
-            board[row, :] = player
+            for i in range(CONNECT_N):
+                assert not connect_four(board, player)
+                board = apply_player_action(board, PlayerAction(i), player)
             assert connect_four(board, player)
 
         # Make sure that a win in a diagonal is detected

@@ -117,8 +117,8 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: List[BoardPiece],
             #beta = min(beta, best_value)
             #if beta <= alpha:
                 #break
-    if depth == 4:
-        print(action_values)
+    #if depth == 4:
+        #print(action_values)
 
     return best_value, best_action
 
@@ -142,5 +142,5 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
 
     # Determine the best action using a minimax algorithm with alpha-bet-pruning which looks 4 steps ahead
     # (two for each player)
-    _, action = minimax(board, -np.inf, np.inf, ordered_players, 4, True)
+    _, action = minimax(board, -np.inf, np.inf, ordered_players, 6, True)
     return PlayerAction(action), SavedState()
