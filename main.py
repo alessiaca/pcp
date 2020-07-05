@@ -93,4 +93,11 @@ def human_vs_agent(
 
 
 if __name__ == "__main__":
+    #agent_vs_agen_often()
     human_vs_agent()
+
+def agent_vs_agent_often():
+    """
+    Lets minimay and MCTS agent play against each other for a lot of games and tracks the winning
+    :return:
+    """

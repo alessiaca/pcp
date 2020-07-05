@@ -51,7 +51,7 @@ class Node:
         """
         # The parent node was created by taking an action for a specific player. For
         # the expansion choose the opponent , as the players have alternating turns
-        player_exp = PLAYER1 if self.player == PLAYER2 else PLAYER1
+        player_exp = PLAYER1 if self.player == PLAYER2 else PLAYER2
         # Apply the action to the board of the parent node
         new_board = apply_player_action(self.board.copy(), action, player_exp)
         # Create a new child node with that action and board
@@ -142,6 +142,11 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
     eval_func = lambda child: child.wins / child.visits
     # Get the child with the best value
     best_child = sorted(root_node.children, key=eval_func)[-1]
+    # Print the final evaluation
+    t = [(child.action, child.wins / child.visits) for child in root_node.children]
+    print(t)
+    print(best_child.action)
+
     # Return the action of the child
     return best_child.action
 
@@ -155,5 +160,5 @@ def generate_move_MCTS(board: np.ndarray, player: BoardPiece, saved_state: Optio
     :return: Column in which player wants to make his move (chosen using MCTS)
     """
     # Give 10 sec to the agent to find a good action
-    action = MCTS(board, player, 10)
+    action = MCTS(board, player, 5)
     return PlayerAction(action), SavedState()
