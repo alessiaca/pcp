@@ -123,12 +123,13 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: List[BoardPiece],
     return best_value, best_action
 
 
-def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]) \
-        -> Tuple[PlayerAction, SavedState]:
+def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState],
+                          depth: int) -> Tuple[PlayerAction, SavedState]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID
     :param saved_state: Not used in this implementation of the minimax move generation
+    :param depth: Depth of the minimax agent / how many steps should be searched ahead
     :return: Column in which player wants to make his move (chosen using the minimax algorithm)
     """
     # If the minimax agent can make the first move, make sure it is always in the middle (position 3)
@@ -142,5 +143,5 @@ def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Op
 
     # Determine the best action using a minimax algorithm with alpha-bet-pruning which looks 4 steps ahead
     # (two for each player)
-    _, action = minimax(board, -np.inf, np.inf, ordered_players, 6, True)
+    _, action = minimax(board, -np.inf, np.inf, ordered_players, depth, True)
     return PlayerAction(action), SavedState()

@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Optional, Callable, Tuple
+from typing import Optional, Callable, Tuple, Union
 from enum import Enum
 from numba import njit
 
@@ -22,9 +22,11 @@ class SavedState:
     pass
 
 
+# Arguments and return type for the generate_move function: Add Optional[Union[int, float, None]]] to give the
+# function the depth of the minimax agent and the maximum time of the MCTS agent
 GenMove = Callable[
-    [np.ndarray, BoardPiece, Optional[SavedState]],  # Arguments for the generate_move function
-    Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
+    [np.ndarray, BoardPiece, Optional[SavedState], Optional[Union[int, float, None]]],
+    Tuple[PlayerAction, Optional[SavedState]]
 ]
 
 

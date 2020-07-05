@@ -18,6 +18,7 @@ def poss_actions(board, player=None, check_win=False) -> np.ndarray:
     else:
         return np.where(board[0, :] == NO_PLAYER)[0]
 
+
 class Node:
     """
     Describes a tree node with all properties and corresponding functions (see below)
@@ -70,6 +71,26 @@ class Node:
         """
         self.visits += 1
         self.wins += result
+
+
+def choose_child(rootnode: Node):
+    """
+    :param rootnode: Root node of tree after MCTS was performed
+    :return: The action of the child which is expected to win
+    """
+    best_score = -np.infty
+    for child in rootnode.children:
+        # Check if one child is a win --> If so return the action
+        if connect_four(child.board, child.player):
+            return child.action
+        # If no child is a win, compute the win/visit ratio and return the action of the child with the
+        # highest ratio
+        else:
+            score = child.wins / child.visits
+            if score > best_score:
+                action = child.action
+                best_score = score
+    return action
 
 
 
@@ -139,26 +160,32 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
             node = node.parent
 
     # After the max_time has run out, choose the best action based on the ratio of wins and visits
-    eval_func = lambda child: child.wins / child.visits
-    # Get the child with the best value
-    best_child = sorted(root_node.children, key=eval_func)[-1]
-    # Print the final evaluation
-    t = [(child.action, child.wins / child.visits) for child in root_node.children]
-    print(t)
-    print(best_child.action)
+    best_score = -np.infty
+    for child in root_node.children:
+        # Check if one child is a win --> If so return the action (make sure that the agent takes the
+        # immediate win possibility)
+        if connect_four(child.board, child.player):
+            return child.action
+        # If no child is a win, compute the win/visit ratio and return the action of the child with the
+        # highest ratio
+        else:
+            score = child.wins / child.visits
+            if score > best_score:
+                best_action = child.action
+                best_score = score
+    return best_action
 
-    # Return the action of the child
-    return best_child.action
 
-
-def generate_move_MCTS(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState]) \
+def generate_move_MCTS(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState],
+                       max_time: float) \
         -> Tuple[PlayerAction, SavedState]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID
     :param saved_state: Not used in this implementation of the move generation
+    :param max_time: Time ins sec given to the MCTS agent to find teh next action
     :return: Column in which player wants to make his move (chosen using MCTS)
     """
-    # Give 10 sec to the agent to find a good action
-    action = MCTS(board, player, 5)
+    # Give time sec to the agent to find a good action
+    action = MCTS(board, player, max_time)
     return PlayerAction(action), SavedState()
