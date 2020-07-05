@@ -115,6 +115,7 @@ def agent_vs_agent_often(n_iterations: int, plot_res: bool):
     minimax_depth = 4
     result = np.zeros((2, 1)) # Stores the number of wins for each agent
     for i in range(n_iterations):
+        print(f"Start round {i}")
         # Let the agents play one round (consisting of each agent starting one game)
         # and add the wins to the result array
         result += play_one_round(generate_move_1=minimax_move, generate_move_2=MCTS_move,
@@ -127,10 +128,10 @@ def agent_vs_agent_often(n_iterations: int, plot_res: bool):
         # Plot a pie chart of the winning percentages
         labels = [f"Minimax with depth {minimax_depth}", f"MCTS with max time {MCTS_time}", "Draw"]
         print(perc_win)
-        plt.pie(perc_win, labels=labels)
+        plt.pie(np.squeeze(perc_win), labels=labels)
         plt.show()
 
 
 if __name__ == "__main__":
-    agent_vs_agent_often(1, False)
+    agent_vs_agent_often(5, True)
     #play_one_round()  # Either human vs. agent or agent vs. agent
