@@ -36,7 +36,7 @@ def play_one_round(
         args_2: Union[int, float, None] = None,
         init_1: Callable = lambda board, player: None,
         init_2: Callable = lambda board, player: None,
-        print_board = True
+        print_board=True
 ):
     """
     :param generate_move_1: Function which is used for the move generation of player 1
@@ -77,7 +77,7 @@ def play_one_round(
                 if print_board:
                     print(pretty_print_board(board))
                     print(
-                    f'{player_name} you are playing with {"X" if player == PLAYER1 else "O"}'
+                        f'{player_name} you are playing with {"X" if player == PLAYER1 else "O"}'
                     )
                 action, saved_state[player] = gen_move(
                     board.copy(), player, saved_state[player], args
@@ -102,36 +102,43 @@ def play_one_round(
     return result
 
 
-def agent_vs_agent_often(n_iterations: int, plot_res: bool):
+def evaluate_performance_agents(n_iterations: int, plot_res: bool):
     """
-    Lets minimax and MCTS agent play against each other for a lot of rounds, tracks the winning of the two
-    agents and creates a pie chart of the winning proportions
+    Lets minimax, MCTS and the random  agent play against each other for a lot of rounds, tracks the
+    winning of the three agents and creates a pie charts of the winning proportions
     :param n_iterations: Number of rounds the agents should play against each other
     :param plot_res: True if results (winning proportions) should be plotted, False if not wanted
     """
     # Change here the variations of MCTS time and minimax depth (no alpha-beta pruning used - caution
     # when increasing the search depth)
-    MCTS_time = 5
+    MCTS_time = 10
     minimax_depth = 4
-    result = np.zeros((2, 1)) # Stores the number of wins for each agent
-    for i in range(n_iterations):
-        print(f"Start round {i}")
-        # Let the agents play one round (consisting of each agent starting one game)
-        # and add the wins to the result array
-        result += play_one_round(generate_move_1=minimax_move, generate_move_2=MCTS_move,
-                       args_1=minimax_depth, args_2=MCTS_time, print_board=False)
-    # Calculate the percentage of wins and add the percentage of draws
-    perc_win = result / (n_iterations * 2)  # * 2 as a round consists of two plays
-    draw =  1 - np.sum(perc_win)
-    perc_win = np.vstack((perc_win, [[draw]]))
-    if plot_res:
-        # Plot a pie chart of the winning percentages
-        labels = [f"Minimax with depth {minimax_depth}", f"MCTS with max time {MCTS_time}", "Draw"]
-        print(perc_win)
-        plt.pie(np.squeeze(perc_win), labels=labels)
-        plt.show()
+    # Let all agents play against each other
+    agent_pairs = [(minimax_move, MCTS_move), (random_move, MCTS_move), (minimax_move, random_move)]
+    names = [("Minimax", "MCTS"), ("Random", "MCTS"), ("Minimax", "Random")]
+    for j, ((agent_1, agent_2), (name_1, name_2)) in enumerate(zip(agent_pairs, names)):
+        result = np.zeros((2, 1))  # Stores the number of wins for each agent
+        for i in range(n_iterations):
+            print(f"Agent {name_1} vs. {name_2} starts round {i} out of {n_iterations}")
+            # Let the agents play one round (consisting of each agent starting one game)
+            # and add the wins to the result array
+            result += play_one_round(generate_move_1=agent_1, generate_move_2=agent_2,
+                                     args_1=minimax_depth, args_2=MCTS_time, print_board=False)
+        # Calculate the percentage of wins and add the percentage of draws
+        perc_win = result / (n_iterations * 2)  # * 2 as a round consists of two plays
+        draw = 1 - np.sum(perc_win)
+        perc_win = np.vstack((perc_win, [[draw]]))
+        if plot_res:
+            # Plot a pie chart of the winning percentages
+            label_1 = f" {name_1} with depth {minimax_depth}" if name_1 == "Minimax" else name_1
+            label_2 = f" {name_2} with max time {MCTS_time}" if name_2 == "MCTS" else name_2
+            labels = [str(perc_win[0][0]) + label_1, str(perc_win[1][0]) + label_2, "Draw"]
+            print(perc_win.flatten())
+            plt.plot()
+            plt.pie(np.squeeze(perc_win), labels=labels)
+            plt.savefig(f"Percentage_wins_{name_1}_{name_2}.png")
 
 
 if __name__ == "__main__":
-    agent_vs_agent_often(5, True)
-    #play_one_round()  # Either human vs. agent or agent vs. agent
+    evaluate_performance_agents(n_iterations=5, plot_res=True)
+    # play_one_round()  # Either human vs. agent or agent vs. agent
