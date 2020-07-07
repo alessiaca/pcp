@@ -40,7 +40,7 @@ def play_one_round(
 ):
     """
     :param generate_move_1: Function which is used for the move generation of player 1
-    (here either random_move, minimax_move or user_move)
+    (here either random_move, minimax_move, MCTS_move or user_move)
     :param generate_move_2: Function which is used for the move generation of player 2
     :param player_1: Name of player 1
     :param player_2: Name of player 2
@@ -56,6 +56,7 @@ def play_one_round(
     from agents.common import initialize_game_state, pretty_print_board, apply_player_action, check_end_state
 
     players = (PLAYER1, PLAYER2)
+    static_player_names = (player_1, player_2)
     result = np.zeros((2, 1))  # Save the number of wins per agent
     # Two rounds in which the player that makes the first move is switched
     for play_first in (1, -1):
@@ -95,7 +96,7 @@ def play_one_round(
                         ) if print_board else None
                         # Save which player won, the result array saves in the first row the number of wins
                         # of the first agent and in the second row the number of wins of the second agent
-                        result[player_names.index(player_name)] += 1
+                        result[static_player_names.index(player_name)] += 1
 
                     playing = False
                     break
@@ -130,8 +131,8 @@ def evaluate_performance_agents(n_iterations: int, plot_res: bool):
         perc_win = np.vstack((perc_win, [[draw]]))
         if plot_res:
             # Plot a pie chart of the winning percentages
-            label_1 = f" {name_1} with depth {minimax_depth}" if name_1 == "Minimax" else name_1
-            label_2 = f" {name_2} with max time {MCTS_time}" if name_2 == "MCTS" else name_2
+            label_1 = f": {name_1} with depth {minimax_depth}" if name_1 == "Minimax" else name_1
+            label_2 = f": {name_2} with max time {MCTS_time}" if name_2 == "MCTS" else name_2
             labels = [str(perc_win[0][0]) + label_1, str(perc_win[1][0]) + label_2, "Draw"]
             print(perc_win.flatten())
             plt.plot()
@@ -140,5 +141,5 @@ def evaluate_performance_agents(n_iterations: int, plot_res: bool):
 
 
 if __name__ == "__main__":
-    evaluate_performance_agents(n_iterations=5, plot_res=True)
-    # play_one_round()  # Either human vs. agent or agent vs. agent
+    evaluate_performance_agents(n_iterations=1, plot_res=True)
+    #play_one_round(generate_move_1=user_move, generate_move_2=MCTS_move, args_2=5)  # Either human vs. agent or agent vs. agent
