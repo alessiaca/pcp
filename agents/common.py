@@ -2,6 +2,7 @@ import numpy as np
 from typing import Optional, Callable, Tuple, Union
 from enum import Enum
 from numba import njit
+import re
 
 BoardPiece = np.int8  # The data type (dtype) of the board
 NO_PLAYER = BoardPiece(0)  # board[i, j] == NO_PLAYER where the position is empty
@@ -42,7 +43,7 @@ def pretty_print_board(board: np.ndarray) -> str:
     :param board: State of board , 6 x 7 array
     :return: String which shows the state of the board in a human readable way
     """
-    states = [' ', 'X', 'O']
+    states = ['.', 'X', 'O']
     pp_board = '| ============= |\n'
     for row in board:
         states_row = [states[int(i)] for i in row]
@@ -53,6 +54,26 @@ def pretty_print_board(board: np.ndarray) -> str:
     return pp_board
 
 
+def string_to_board(pp_board: str) -> np.ndarray:
+    """
+    :param pp_board: String of pretty printed board (output of the pretty_print_board function)
+    :return: The printed board converted back into an array with which can be used for further computation
+    """
+    states = ['.', 'X', 'O']
+    players = [NO_PLAYER, PLAYER1, PLAYER2]
+    # Remove all special characters from the board
+    clean_board = re.sub("[ =|0123456]", "", pp_board)
+    # Split the clean board string into lines and remove the first one and the last two as they are just for a nicer visualization
+    rows = clean_board.splitlines()[1:-2]
+    # Initialize a new board that can now be filled
+    new_board = initialize_game_state()
+    # Loop through all the characters in each row
+    for i, row in enumerate(rows):
+        for j, c in enumerate(row):
+            new_board[i, j] = players[states.index(c)]
+    return new_board
+
+
 def apply_player_action(
         board: np.ndarray, action: PlayerAction, player: BoardPiece) -> np.ndarray:
     """
@@ -61,10 +82,12 @@ def apply_player_action(
     :param player: player ID for which action should be applied [1, 2]
     :return: New state of board after action of the player was applied
     """
-    max_free_ind = np.max(np.where(board[:, action] == NO_PLAYER))
-    board[max_free_ind, action] = player
-    return board
-
+    try:
+        max_free_ind = np.max(np.where(board[:, action] == NO_PLAYER))
+        board[max_free_ind, action] = player
+        return board
+    except:
+        raise Exception("Tried to apply an action in a non existent or full column")
 
 @njit()
 def connect_four(
@@ -81,15 +104,15 @@ def connect_four(
     cols_edge = cols - CONNECT_N + 1
     for i in range(rows):
         for j in range(cols_edge):
-            if np.all(board[i, j:j+CONNECT_N] == player):
+            if np.all(board[i, j:j + CONNECT_N] == player):
                 return True
     for i in range(rows_edge):
         for j in range(cols):
-            if np.all(board[i:i+CONNECT_N, j] == player):
+            if np.all(board[i:i + CONNECT_N, j] == player):
                 return True
     for i in range(rows_edge):
         for j in range(cols_edge):
-            block = board[i:i+CONNECT_N, j:j+CONNECT_N]
+            block = board[i:i + CONNECT_N, j:j + CONNECT_N]
             if np.all(np.diag(block) == player):
                 return True
             if np.all(np.diag(block[::-1, :]) == player):
@@ -98,7 +121,7 @@ def connect_four(
 
 
 def check_end_state(
-    board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
+        board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> GameState:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
@@ -114,5 +137,3 @@ def check_end_state(
             return GameState.STILL_PLAYING
         else:
             return GameState.IS_DRAW
-
-

@@ -124,7 +124,7 @@ def evaluate_performance_agents(n_iterations: int, plot_res: bool):
             # Let the agents play one round (consisting of each agent starting one game)
             # and add the wins to the result array
             result += play_one_round(generate_move_1=agent_1, generate_move_2=agent_2,
-                                     args_1=minimax_depth, args_2=MCTS_time, print_board=False)
+                                     args_1=minimax_depth, args_2=MCTS_time, print_board=True)
         # Calculate the percentage of wins and add the percentage of draws
         perc_win = result / (n_iterations * 2)  # * 2 as a round consists of two plays
         draw = 1 - np.sum(perc_win)
@@ -138,8 +138,9 @@ def evaluate_performance_agents(n_iterations: int, plot_res: bool):
             plt.plot()
             plt.pie(np.squeeze(perc_win), labels=labels)
             plt.savefig(f"Percentage_wins_{name_1}_{name_2}.png")
+            plt.close()
 
 
 if __name__ == "__main__":
-    evaluate_performance_agents(n_iterations=1, plot_res=True)
+    evaluate_performance_agents(n_iterations=2, plot_res=True)
     #play_one_round(generate_move_1=user_move, generate_move_2=MCTS_move, args_2=5)  # Either human vs. agent or agent vs. agent

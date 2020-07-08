@@ -1,20 +1,20 @@
 import numpy as np
 import time
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple
 from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_action, connect_four,\
-    check_end_state, GameState, CONNECT_N, PLAYER1, PLAYER2, NO_PLAYER
+     PLAYER1, PLAYER2, NO_PLAYER
 
 
 def poss_actions(board, player=None, check_win=False) -> np.ndarray:
     """
-    :param state: Board
+    :param board: Board
     :param player: Player who took the last action on the board
     :param check_win: Bool if it should be checked whether the player won the game
     :return: Array of possible actions/free columns
     """
     # No free actions if the action of the node won the game
     if check_win and connect_four(board, player):
-        return []
+        return np.array([])
     else:
         return np.where(board[0, :] == NO_PLAYER)[0]
 
@@ -73,27 +73,6 @@ class Node:
         self.wins += result
 
 
-def choose_child(rootnode: Node):
-    """
-    :param rootnode: Root node of tree after MCTS was performed
-    :return: The action of the child which is expected to win
-    """
-    best_score = -np.infty
-    for child in rootnode.children:
-        # Check if one child is a win --> If so return the action
-        if connect_four(child.board, child.player):
-            return child.action
-        # If no child is a win, compute the win/visit ratio and return the action of the child with the
-        # highest ratio
-        else:
-            score = child.wins / child.visits
-            if score > best_score:
-                action = child.action
-                best_score = score
-    return action
-
-
-
 def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
@@ -150,7 +129,7 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
             if player_sim == player:
                 result = 1  # The player won
             else:
-                result = -1  # The player lost against the opponent
+                result = 0  # The player lost against the opponent
         else:
             result = 0  # Game ended in a draw
         # Go up the tree until reaching the root node and update the visits and wins property of
@@ -161,6 +140,7 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
 
     # After the max_time has run out, choose the best action based on the ratio of wins and visits
     best_score = -np.infty
+    best_action = None
     for child in root_node.children:
         # Check if one child is a win --> If so return the action (make sure that the agent takes the
         # immediate win possibility)
