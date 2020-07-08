@@ -2,12 +2,17 @@ import numpy as np
 import pytest
 from agents.common import initialize_game_state, pretty_print_board, apply_player_action, connect_four, \
      string_to_board, check_end_state, PLAYER1, PLAYER2, PlayerAction, CONNECT_N, GameState
+from agents.agent_minimax import minimax_move
+from agents.agent_MCTS import MCTS_move
+
+move_agents = [minimax_move, MCTS_move]
 
 players = [PLAYER1, PLAYER2]
 
 #TODO Write test for the agents
 
 def test_initialize_game_state():
+    """Test the initialization of the board"""
 
     ret = initialize_game_state()
 
@@ -18,6 +23,7 @@ def test_initialize_game_state():
 
 
 def test_pretty_print_board_and_string_to_board():
+    """Test the printing of a board and the transformation back to an array"""
 
     # Check that the print of the board to a string and the transformation back to the board works for every position on
     # the board for each player
@@ -39,6 +45,7 @@ def test_pretty_print_board_and_string_to_board():
 
 
 def test_apply_player_action_success():
+    """Test for successful application of actions"""
 
     # Test if application of action (drop of the board piece) is possible for every cell and player
     for player in players:
@@ -55,6 +62,7 @@ def test_apply_player_action_success():
 
 
 def test_apply_player_action_fail():
+    """Test that an error is raised if an action in a full or not existent column is applied"""
 
     # Test for the insertion in a already full column
     full_board = initialize_game_state()
@@ -71,6 +79,7 @@ def test_apply_player_action_fail():
 
 
 def test_connect_four():
+    """Test that 4 adjacent pieces at every position are detected"""
 
     # Get the shape of the board
     empty_board = initialize_game_state()
@@ -120,6 +129,7 @@ def test_connect_four():
 
 
 def test_check_end_state():
+    """Check that a win, draw or loss is correctly detected"""
 
     for player in players:
         board = initialize_game_state()
@@ -135,6 +145,36 @@ def test_check_end_state():
         assert check_end_state(draw_board, player) == GameState.IS_DRAW
 
 
+def test_agents():
+    """ Test that the agents minimax and MCTS take immediate wins and block immediate losses"""
+
+    empty_board = initialize_game_state()
+    n_rows, n_cols = empty_board.shape
+    for player in players:
+        opponent = PLAYER1 if player == PLAYER2 else PLAYER2
+        # Test for immediate wins (p=player) and immediate losses (p=opponent)
+        for p in (player, opponent):
+            board_col = empty_board.copy()
+            board_row = empty_board.copy()
+            # Check for win and loss in a row and column
+            for i in range(CONNECT_N - 1):
+                board_row = apply_player_action(board_row, PlayerAction(i), p)
+                board_col = apply_player_action(board_col, PlayerAction(CONNECT_N - 1), p)
+            # Check that both agents make the right move (always column CONNECT_N -1 = 3)
+            for move_agent in move_agents:
+                for board in [board_row, board_col]:
+                    action = move_agent(board, player, None)[0]
+                    assert action == PlayerAction(CONNECT_N - 1)
+
+        # Test that the agent blocks a certain win of the opponent (two free player pieces in the middle of
+        # the board generate a certain win if the player does not put his piece to the right of left)
+        board = empty_board.copy()
+        board[-1, 1:3] = opponent
+        for move_agent in move_agents:
+            action = move_agent(board, player, None)[0]
+            assert action == PlayerAction(0) or action == PlayerAction(3)
+
+
 # Run the tests when executing the script
 test_pretty_print_board_and_string_to_board()
 test_initialize_game_state()
@@ -142,3 +182,4 @@ test_apply_player_action_success()
 test_apply_player_action_fail()
 test_connect_four()
 test_check_end_state()
+test_agents()

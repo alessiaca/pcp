@@ -124,7 +124,7 @@ def minimax(board: np.ndarray, alpha: int, beta: int, players: List[BoardPiece],
 
 
 def generate_move_minimax(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState],
-                          depth: int) -> Tuple[PlayerAction, SavedState]:
+                          depth: int = 4) -> Tuple[PlayerAction, SavedState]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID

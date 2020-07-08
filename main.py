@@ -142,5 +142,5 @@ def evaluate_performance_agents(n_iterations: int, plot_res: bool):
 
 
 if __name__ == "__main__":
-    evaluate_performance_agents(n_iterations=2, plot_res=True)
-    #play_one_round(generate_move_1=user_move, generate_move_2=MCTS_move, args_2=5)  # Either human vs. agent or agent vs. agent
+    #evaluate_performance_agents(n_iterations=2, plot_res=True)
+    play_one_round(generate_move_1=user_move, generate_move_2=MCTS_move, args_2=5)  # Either human vs. agent or agent vs. agent

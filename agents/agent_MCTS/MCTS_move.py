@@ -161,7 +161,7 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
 
 
 def generate_move_MCTS(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState],
-                       max_time: float) \
+                       max_time: float = 5) \
         -> Tuple[PlayerAction, SavedState]:
     """
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
