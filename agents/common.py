@@ -33,6 +33,7 @@ GenMove = Callable[
 
 def initialize_game_state() -> np.ndarray:
     """
+    Creates an empty board
     :return: initial board state,  6 x 7 array of zeros
     """
     return np.zeros((6, 7), dtype=BoardPiece)
@@ -40,6 +41,7 @@ def initialize_game_state() -> np.ndarray:
 
 def pretty_print_board(board: np.ndarray) -> str:
     """
+    Prints a board given as an array as a pretty string
     :param board: State of board , 6 x 7 array
     :return: String which shows the state of the board in a human readable way
     """
@@ -56,6 +58,7 @@ def pretty_print_board(board: np.ndarray) -> str:
 
 def string_to_board(pp_board: str) -> np.ndarray:
     """
+    Transforms a board given in string format no an array
     :param pp_board: String of pretty printed board (output of the pretty_print_board function)
     :return: The printed board converted back into an array with which can be used for further computation
     """
@@ -63,7 +66,8 @@ def string_to_board(pp_board: str) -> np.ndarray:
     players = [NO_PLAYER, PLAYER1, PLAYER2]
     # Remove all special characters from the board
     clean_board = re.sub("[ =|0123456]", "", pp_board)
-    # Split the clean board string into lines and remove the first one and the last two as they are just for a nicer visualization
+    # Split the clean board string into lines and remove the first one and the last two
+    # as they are just for a nicer visualization
     rows = clean_board.splitlines()[1:-2]
     # Initialize a new board that can now be filled
     new_board = initialize_game_state()
@@ -77,6 +81,7 @@ def string_to_board(pp_board: str) -> np.ndarray:
 def apply_player_action(
         board: np.ndarray, action: PlayerAction, player: BoardPiece) -> np.ndarray:
     """
+    Applies the action of the player to the board
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param action: Column where player should be dropped
     :param player: player ID for which action should be applied [1, 2]
@@ -94,6 +99,7 @@ def connect_four(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None) \
         -> bool:
     """
+    Determines if a player has at least CONNECT_N (here 4) adjacent pieces on the board
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which victory should be checked
     :param last_action: last column where player was dropped
@@ -102,14 +108,17 @@ def connect_four(
     rows, cols = board.shape
     rows_edge = rows - CONNECT_N + 1
     cols_edge = cols - CONNECT_N + 1
+    # Check for a win in thes row
     for i in range(rows):
         for j in range(cols_edge):
             if np.all(board[i, j:j + CONNECT_N] == player):
                 return True
+    # Check for a win in the columns
     for i in range(rows_edge):
         for j in range(cols):
             if np.all(board[i:i + CONNECT_N, j] == player):
                 return True
+    # Check for a win in the diagonals
     for i in range(rows_edge):
         for j in range(cols_edge):
             block = board[i:i + CONNECT_N, j:j + CONNECT_N]
@@ -124,6 +133,7 @@ def check_end_state(
         board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,
 ) -> GameState:
     """
+    Determines the state of the game
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID for which GameState should be checked
     :param last_action: last column where player was dropped

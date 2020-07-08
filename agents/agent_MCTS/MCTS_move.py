@@ -7,10 +7,11 @@ from agents.common import PlayerAction, BoardPiece, SavedState, apply_player_act
 
 def poss_actions(board, player=None, check_win=False) -> np.ndarray:
     """
-    :param board: Board
+    Determines the possible actions that can be taken in a given board
+    :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player who took the last action on the board
     :param check_win: Bool if it should be checked whether the player won the game
-    :return: Array of possible actions/free columns
+    :return: Array of possible actions (free columns)
     """
     # No free actions if the action of the node won the game
     if check_win and connect_four(board, player):
@@ -21,21 +22,22 @@ def poss_actions(board, player=None, check_win=False) -> np.ndarray:
 
 class Node:
     """
-    Describes a tree node with all properties and corresponding functions (see below)
+    Describes a tree node associated with a specific board state used for Monte-Carlo-Tree-Search (MCTS - see below)
     """
     def __init__(self, action=None, parent=None, board=None, player=None):
         self.parent = parent
-        self.action = action  # Every node has an action that resulted in its board
-        self.board = board  # Every node has an associated board state
-        self.player = player
+        self.action = action  # The action that resulted in the board
+        self.board = board  # Associated board state
+        self.player = player  # The player at the current node whose action led to the board
         self.wins = 0
         self.visits = 0
         self.children = []
         self.untried_actions = poss_actions(board, player, True)  # Array of free columns, no possible actions
-        # if the player won the game --> teh node is a terminal node
+        # if the player won the game --> the node is a terminal node
 
     def selection(self, c=np.sqrt(2)):
         """
+        Chooses the best child that should be explored based on UCB1
         c: Exploration parameter
         :return: Returns the child node with the largest UCB1 value
         """
@@ -46,6 +48,7 @@ class Node:
 
     def expansion(self, action: PlayerAction):
         """
+        Expands a node by creating a new child node
         :param action: Action to apply in order to expand a node
         :return: Child after node expansion (The board of the child node
         corresponds to the board of the parent after the action was applied)
@@ -66,8 +69,8 @@ class Node:
 
     def update(self, result: int):
         """
-        Update the win and visits value of a node
-        :param result: 0 if the game ended in a draw, 1 if the player won adn -1 if the opponent won
+        Updates the win and visits value of a node
+        :param result: 0 if the game ended in a draw, 1 if the player won, -1 if the player lost
         """
         self.visits += 1
         self.wins += result
@@ -75,6 +78,7 @@ class Node:
 
 def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction:
     """
+    Finds the best action given the board using Monte-Carlo-Tree-Search
     :param board: State of board, 6 x 7 with either 0 or player ID [1, 2]
     :param player: Player ID of the player for which a good move (that generates a win most probably)
      has to be chosen
@@ -124,12 +128,12 @@ def MCTS(board: np.ndarray, player: BoardPiece, max_time: float) -> PlayerAction
 
         # Backpropagation
         # Update the number of visits and wins for each node
-        # Check if which player won the random simulation and determine the corresponding result
+        # Check which player won the random simulation and determine the corresponding result
         if win:
             if player_sim == player:
                 result = 1  # The player won
             else:
-                result = 0  # The player lost against the opponent
+                result = -1  # The player lost against the opponent
         else:
             result = 0  # Game ended in a draw
         # Go up the tree until reaching the root node and update the visits and wins property of
